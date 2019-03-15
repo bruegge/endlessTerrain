@@ -55,12 +55,30 @@ glm::uvec2 CWindowGLFW::GetWindowSize() const
 	return glm::uvec2(m_nScreenWidth, m_nScreenHeight);
 }
 
-void CWindowGLFW::ManageInputs() const
+bool CWindowGLFW::ManageInputs() const
 {
 	glfwPollEvents();
+
+	if (glfwGetKey(m_pWindow, GLFW_KEY_1) == GLFW_PRESS)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+
+	if (glfwGetKey(m_pWindow, GLFW_KEY_2) == GLFW_PRESS)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	return glfwGetKey(m_pWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwWindowShouldClose(m_pWindow); //stop program when closing the window or pressing "escape"
 }
+
 
 void CWindowGLFW::SwapBuffers() const
 {
 	glfwSwapBuffers(m_pWindow);
+}
+
+GLFWwindow* CWindowGLFW::GetWindowID()
+{
+	return m_pWindow;
 }

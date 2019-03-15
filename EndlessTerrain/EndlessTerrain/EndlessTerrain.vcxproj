@@ -127,12 +127,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\ExternalLibs\src\glad.c" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="Planet.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="WindowGLFW.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Terrain.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Planet.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="WindowGLFW.h" />
   </ItemGroup>
   <ItemGroup>

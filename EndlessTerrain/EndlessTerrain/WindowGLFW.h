@@ -11,8 +11,9 @@ public:
 
 	void SetWindowSize(unsigned int nWidth, unsigned int nHeight);
 	glm::uvec2 GetWindowSize() const;
-	void ManageInputs() const;
+	bool ManageInputs() const;
 	void SwapBuffers() const;
+	GLFWwindow* GetWindowID();
 
 private:
 	GLFWwindow* m_pWindow = nullptr; //pointer to the GLFW window
