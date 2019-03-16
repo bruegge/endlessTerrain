@@ -1,25 +1,37 @@
 #include "Planet.h"
 #include <vector>
-#include <glm\gtx\transform.hpp>
-
+#include <glm/gtx/transform.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 CPlanet::CPlanet()
 {
 	RandomizeNoise();
+	m_aQuadTrees[0].SetEdges(glm::vec3(1, 1, -1), glm::vec3(1, 1, 1), glm::vec3(1, -1, 1), glm::vec3(1, -1, -1));
+	m_aQuadTrees[1].SetEdges(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(1, -1, -1), glm::vec3(-1, -1, -1));
+	m_aQuadTrees[2].SetEdges(glm::vec3(1, 1, 1), glm::vec3(-1, 1, 1), glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1));
+	m_aQuadTrees[3].SetEdges(glm::vec3(-1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1, -1), glm::vec3(-1, 1, -1));
+	m_aQuadTrees[4].SetEdges(glm::vec3(-1, 1, 1), glm::vec3(-1, 1, -1), glm::vec3(-1, -1, -1), glm::vec3(-1, -1, 1));
+	m_aQuadTrees[5].SetEdges(glm::vec3(-1, -1, 1), glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1), glm::vec3(1, -1, 1));
+	
 }
 
 
 CPlanet::~CPlanet()
 {
+	glDeleteBuffers(1, &m_nIBO);
+	glDeleteBuffers(1, &m_nVBO);
+	glDeleteBuffers(1, &m_nVBOEdges);
+	glDeleteVertexArrays(1, &m_nVAO);
 }
 
-void CPlanet::InitializeGeometry(unsigned int nGridWidth)
+unsigned int CPlanet::GetGeometrySize()
 {
-	glGenVertexArrays(1, &m_nVAO);
-	glBindVertexArray(m_nVAO);
-	glGenBuffers(1, &m_nVBO);
-	glGenBuffers(1, &m_nIBO);
+	return m_nGeometrySize;
+}
 
+void CPlanet::SetGeometrySize(unsigned int nGridWidth)
+{
+	m_nGeometrySize = nGridWidth;
 	std::vector<glm::vec3> resultVBO(nGridWidth * nGridWidth);
 
 	for (unsigned int x = 0; x < nGridWidth; ++x)
@@ -30,7 +42,7 @@ void CPlanet::InitializeGeometry(unsigned int nGridWidth)
 			GLfloat fXPosition = static_cast<GLfloat>(x) / static_cast<GLfloat>(nGridWidth - 1);
 			GLfloat fYPosition = static_cast<GLfloat>(y) / static_cast<GLfloat>(nGridWidth - 1);
 
-			sVertex = glm::vec3((fXPosition - 0.5f)*2.0f, (fYPosition - 0.5f)*2.0f, 1);
+			sVertex = glm::vec3((fXPosition), (fYPosition), 1);
 			resultVBO[nGridWidth * x + y] = sVertex;
 		}
 	}
@@ -48,6 +60,7 @@ void CPlanet::InitializeGeometry(unsigned int nGridWidth)
 			resultIBO[nVectorPosition++] = x * nGridWidth + y;
 			*/
 
+			//triangleList
 			resultIBO[nVectorPosition++] = x * nGridWidth + y;
 			resultIBO[nVectorPosition++] = (x + 1) * nGridWidth + y;
 			resultIBO[nVectorPosition++] = (x + 1) * nGridWidth + y + 1;
@@ -59,15 +72,41 @@ void CPlanet::InitializeGeometry(unsigned int nGridWidth)
 		}
 	}
 
+	if (m_nVAO != 0)
+	{
+		glDeleteBuffers(1, &m_nIBO);
+		glDeleteBuffers(1, &m_nVBO);
+	}
+	else
+	{
+		glGenVertexArrays(1, &m_nVAO);
+		glGenBuffers(1, &m_nVBOEdges);
+		glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 100000, nullptr, GL_DYNAMIC_DRAW);
+	}
+	glBindVertexArray(m_nVAO);
+	glGenBuffers(1, &m_nVBO);
+	glGenBuffers(1, &m_nIBO);
+
 	glBindBuffer(GL_ARRAY_BUFFER, m_nVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * resultVBO.size(), &resultVBO.front(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nIBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * resultIBO.size(), &resultIBO.front(), GL_STATIC_DRAW);
 	
+	glBindBuffer(GL_ARRAY_BUFFER, m_nVBO);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, NULL); //position
-	
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid*)(0 * sizeof(float))); //position
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(0 * sizeof(float))); //edge0
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(3 * sizeof(float))); //edge1
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(6 * sizeof(float))); //edge2
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(9 * sizeof(float))); //edge3
 
 	glBindVertexArray(0);
 	m_nCountIBO = resultIBO.size();
@@ -92,51 +131,63 @@ void CPlanet::RandomizeNoise()
 
 void CPlanet::Draw(CShader* pShader, CCamera* pCamera)
 {
+	glm::vec3 vCameraPosition = pCamera->GetCameraPosition();
+	
 	pShader->Bind();
+	ApplyChangesToVBO(vCameraPosition);
 	glBindVertexArray(m_nVAO);
 
 	GLint nUniformLocationViewProjectionMatrix = glGetUniformLocation(pShader->GetID(), "viewProjectionMatrix");
 	glUniformMatrix4fv(nUniformLocationViewProjectionMatrix, 1, GL_FALSE, &pCamera->GetViewProjectionMatrix()[0][0]);
-
 	glUniform1iv(glGetUniformLocation(pShader->GetID(), "perm"), 512, m_aPerm);
+		
+	glVertexAttribDivisor(1, 1);
+	glVertexAttribDivisor(2, 1);
+	glVertexAttribDivisor(3, 1);
+	glVertexAttribDivisor(4, 1);
 
-	GLint nUniformLocationModelMatrix = glGetUniformLocation(pShader->GetID(), "modelMatrix");
-	glm::mat4 mModelMatrix;
-	for (int i = 0; i < 6; ++i)
-	{
-		mModelMatrix[0] = glm::vec4(1, 0, 0, 0);
-		mModelMatrix[1] = glm::vec4(0, 1, 0, 0);
-		mModelMatrix[2] = glm::vec4(0, 0, 1, 0);
-		mModelMatrix[3] = glm::vec4(0, 0, 0, 1);
-
-		switch (i)
-		{
-		case 0:
-			break;
-		case 1:
-			mModelMatrix = glm::rotate(90.0f*3.1415926f / 180.0f, glm::vec3(0, 1, 0));
-			break;
-		case 2:
-			mModelMatrix = glm::rotate(90.0f*3.1415926f / 180.0f, glm::vec3(0, -1, 0));
-			break;
-		case 3:
-			mModelMatrix = glm::rotate(90.0f*3.1415926f / 180.0f, glm::vec3(1, 0, 0));
-			break;
-		case 4:
-			mModelMatrix = glm::rotate(90.0f*3.1415926f / 180.0f, glm::vec3(-1, 0, 0));
-			break;
-		case 5:
-			mModelMatrix = glm::rotate(180.0f*3.1415926f / 180.0f, glm::vec3(0, 1, 0));
-			break;
-
-		default:
-			break;
-		}
-		glUniformMatrix4fv(nUniformLocationModelMatrix, 1, GL_FALSE, &mModelMatrix[0][0]);
-
-		glDrawElements(GL_TRIANGLES, m_nCountIBO, GL_UNSIGNED_INT, 0);
-	}
-
+	glDrawElementsInstanced(GL_TRIANGLES, m_nCountIBO, GL_UNSIGNED_INT, 0, m_nCountTiles);
+	
 	glBindVertexArray(0);
 	pShader->UnBind();
+}
+
+void CPlanet::ApplyChangesToVBO(glm::vec3 vCameraPosition)
+{
+	bool bChanged = false;
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		m_aQuadTrees[i].CalculateTiles(vCameraPosition);
+		if (m_aQuadTrees[i].IsChanged())
+		{
+			bChanged = true;
+		}
+	}
+
+	if (bChanged)
+	{
+		GLuint nOffset = 0;
+		for (unsigned int i = 0; i < 6; ++i)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
+			glBufferSubData(GL_ARRAY_BUFFER, nOffset, sizeof(glm::vec3) * m_aQuadTrees[i].GetTileCount() * 4, &m_aQuadTrees[i].GetTiles()->at(0).vEdgePositions);
+			nOffset += m_aQuadTrees[i].GetTileCount() * 4 * sizeof(glm::vec3);
+		}
+		m_nCountTiles = nOffset / sizeof(glm::vec3) / 4;
+	}
+}
+
+
+unsigned int CPlanet::GetQuadTreeDepthMax()
+{
+	return m_nQuadTreeDepthMax;
+}
+
+void CPlanet::SetQuadTreeDepthMax(unsigned int nDepthMax)
+{
+	m_nQuadTreeDepthMax = nDepthMax;
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		m_aQuadTrees[i].SetDepthMax(nDepthMax);
+	}
 }

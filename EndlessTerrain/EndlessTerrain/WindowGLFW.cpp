@@ -59,15 +59,6 @@ bool CWindowGLFW::ManageInputs() const
 {
 	glfwPollEvents();
 
-	if (glfwGetKey(m_pWindow, GLFW_KEY_1) == GLFW_PRESS)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-
-	if (glfwGetKey(m_pWindow, GLFW_KEY_2) == GLFW_PRESS)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
 
 	return glfwGetKey(m_pWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwWindowShouldClose(m_pWindow); //stop program when closing the window or pressing "escape"
 }

@@ -17,7 +17,7 @@ public:
 	glm::mat4 GetViewMatrix();
 	glm::mat4 GetProjectionMatrix();
 	glm::mat4 GetViewProjectionMatrix();
-
+	glm::vec3 GetCameraPosition();
 	void ManageKeyInputs();
 
 private:
