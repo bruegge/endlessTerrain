@@ -18,12 +18,15 @@ public:
 	unsigned int GetGeometrySize();
 	unsigned int GetQuadTreeDepthMax();
 	void SetQuadTreeDepthMax(unsigned int nDepthMax);
+	void SetPerlinNoiseCount(unsigned int nCount);
+
 private:
 	
 	void ApplyChangesToVBO(glm::vec3 vCameraPosition);
 	unsigned int m_nQuadTreeDepthMax = 3;
 	unsigned int m_nCountTiles = 0;
 	unsigned int m_nGeometrySize = 0;
+	unsigned int m_nPerlinNoiseCount = 3;
 	GLuint m_nVAO = 0;
 	GLuint m_nVBO = 0;
 	GLuint m_nVBOEdges = 0;

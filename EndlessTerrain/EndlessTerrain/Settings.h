@@ -11,6 +11,9 @@ public:
 	bool m_bEnableWireframe = false;
 	unsigned int m_nGeometrySize = 10;
 	unsigned int m_nMaxQuadTreeDepth = 3;
+	unsigned int m_nInfoInstanceCount = 0;
+	unsigned int m_nPerlinNoiseCount = 0;
+
 private:
 
 	CPlanet* m_pPlanet = nullptr;

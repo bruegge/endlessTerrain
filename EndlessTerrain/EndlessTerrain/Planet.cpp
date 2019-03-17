@@ -2,6 +2,7 @@
 #include <vector>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
+#include "Settings.h"
 
 CPlanet::CPlanet()
 {
@@ -12,9 +13,7 @@ CPlanet::CPlanet()
 	m_aQuadTrees[3].SetEdges(glm::vec3(-1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1, -1), glm::vec3(-1, 1, -1));
 	m_aQuadTrees[4].SetEdges(glm::vec3(-1, 1, 1), glm::vec3(-1, 1, -1), glm::vec3(-1, -1, -1), glm::vec3(-1, -1, 1));
 	m_aQuadTrees[5].SetEdges(glm::vec3(-1, -1, 1), glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1), glm::vec3(1, -1, 1));
-	
 }
-
 
 CPlanet::~CPlanet()
 {
@@ -141,6 +140,8 @@ void CPlanet::Draw(CShader* pShader, CCamera* pCamera)
 	glUniformMatrix4fv(nUniformLocationViewProjectionMatrix, 1, GL_FALSE, &pCamera->GetViewProjectionMatrix()[0][0]);
 	glUniform1iv(glGetUniformLocation(pShader->GetID(), "perm"), 512, m_aPerm);
 		
+	glUniform1i(glGetUniformLocation(pShader->GetID(), "perlinNoiseCount"), m_nPerlinNoiseCount);
+
 	glVertexAttribDivisor(1, 1);
 	glVertexAttribDivisor(2, 1);
 	glVertexAttribDivisor(3, 1);
@@ -174,9 +175,15 @@ void CPlanet::ApplyChangesToVBO(glm::vec3 vCameraPosition)
 			nOffset += m_aQuadTrees[i].GetTileCount() * 4 * sizeof(glm::vec3);
 		}
 		m_nCountTiles = nOffset / sizeof(glm::vec3) / 4;
+		//info output number of instances
+		CSettings::GetSettings()->m_nInfoInstanceCount = m_nCountTiles;
 	}
 }
 
+void CPlanet::SetPerlinNoiseCount(unsigned int nCount)
+{
+	m_nPerlinNoiseCount = nCount;
+}
 
 unsigned int CPlanet::GetQuadTreeDepthMax()
 {

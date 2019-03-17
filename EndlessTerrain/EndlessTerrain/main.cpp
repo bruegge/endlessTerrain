@@ -69,8 +69,8 @@ void GameLoop()
 
 		{
 			ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
-
-		//	ImGui::Text("Settings");               // Display some text (you can use a format strings too)
+						
+			ImGui::Text("Number instances: %i", pSettings->m_nInfoInstanceCount);               // Display some text (you can use a format strings too)
 			ImGui::Checkbox("Enable WireFrames", &(pSettings->m_bEnableWireframe));      // Edit bools storing our window open/close state
 		
 			float fGridSize = static_cast<float>(pSettings->m_nGeometrySize);
@@ -81,6 +81,9 @@ void GameLoop()
 			ImGui::SliderFloat("QuadTree Max Depth", &fMaxQuadTreeDepth, 2.0f, 10.0f);
 			pSettings->m_nMaxQuadTreeDepth = static_cast<unsigned int>(fMaxQuadTreeDepth);
 
+			float fPerlinNoiseCount = static_cast<float>(pSettings->m_nPerlinNoiseCount);
+			ImGui::SliderFloat("Number iterations perlin noise", &fPerlinNoiseCount, 0.0f, 30.0f);
+			pSettings->m_nPerlinNoiseCount = static_cast<unsigned int>(fPerlinNoiseCount);
 
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();

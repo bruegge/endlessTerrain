@@ -45,4 +45,5 @@ void CSettings::ApplySettings()
 	{
 		m_pPlanet->SetQuadTreeDepthMax(m_nMaxQuadTreeDepth);
 	}
+	m_pPlanet->SetPerlinNoiseCount(m_nPerlinNoiseCount);
 }

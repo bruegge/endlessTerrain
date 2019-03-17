@@ -10,6 +10,7 @@ uniform mat4 viewProjectionMatrix;
 uniform vec3 planetCenter;
 uniform vec3 edgePositions[4];
 uniform int perm[512];
+uniform int perlinNoiseCount;
 
 out VS_OUT 
 {
@@ -75,11 +76,11 @@ void main()
 	pos = vec4(normalize(pos.xyz) + planetCenter,1);
 	vs_out.position = pos.xyz;
 	float perlin = 0;
-	/*for(float i = 1; i< 5; ++i)
+	for(float i = 1; i< perlinNoiseCount+1; ++i)
 	{
 		float pNoise = noise(pos.x * i * i, pos.y * i * i, pos.z * i *i);
 		perlin += (pNoise - 0.5f) / i * 0.05f;
-	}*/
+	}
 	perlin = max(0.01f,perlin);
 	pos = vec4(pos.xyz * perlin + pos.xyz,1);
 

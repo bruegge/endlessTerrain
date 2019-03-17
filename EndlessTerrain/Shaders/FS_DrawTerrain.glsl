@@ -2,6 +2,7 @@
 
 uniform int colorSetting;
 uniform int perm[512];
+uniform int perlinNoiseCount;
 
 in VS_OUT 
 {
@@ -58,11 +59,12 @@ float noise(float x, float y, float z)
 void main()
 {
 	float perlin = 0;
-	/*for(float i = 1; i< 30; ++i)
+	vec3 pos = normalize(fs_in.position);
+	for(float i = 1; i< perlinNoiseCount+1; ++i)
 	{
-		float pNoise = noise(fs_in.position.x * i * i, fs_in.position.y * i * i, fs_in.position.z * i * i);
+		float pNoise = noise(pos.x * i * i, pos.y * i * i, pos.z * i * i);
 		perlin += (pNoise - 0.5f) / i * 0.05f;
-	}*/
+	}
 
 	if(colorSetting == 0)
 	{
