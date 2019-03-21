@@ -5,17 +5,21 @@ layout (location = 1) in vec3 edgePosition0;
 layout (location = 2) in vec3 edgePosition1;
 layout (location = 3) in vec3 edgePosition2;
 layout (location = 4) in vec3 edgePosition3;
+layout (location = 5) in float tJunctionFlag;
 
 uniform mat4 viewProjectionMatrix;
 uniform vec3 planetCenter;
 uniform vec3 edgePositions[4];
 uniform int perm[512];
 uniform int perlinNoiseCount;
+uniform int gridSize;
 
+vec3 positionGlobal;
 out VS_OUT 
 {
     float height;
 	vec3 position;
+	vec3 color;
 } vs_out;
 
 float fade(float t) 
@@ -64,14 +68,47 @@ float noise(float x, float y, float z)
 
 vec3 Interpolate3D(vec3 p1, vec3 p2, vec3 p3, vec3 p4)
 {
-	vec3 pm1 = mix(p1,p2, position.x);
-	vec3 pm2 = mix(p4,p3, position.x);
-	return mix(pm1, pm2, position.y);
+	vec3 pm1 = mix(p1,p2, positionGlobal.x);
+	vec3 pm2 = mix(p4,p3, positionGlobal.x);
+	return mix(pm1, pm2, positionGlobal.y);
+}
+
+int Modulo(int number, int modulo)
+{
+	return number - (number / modulo) * modulo;
+}
+
+void ManageTJunctions()
+{
+	uint flag = floatBitsToUint(tJunctionFlag);
+	positionGlobal = position;
+	uint bit0 = flag & 0x1;
+	uint bit1 = flag & 0x2;
+	uint bit2 = flag & 0x4;
+	uint bit3 = flag & 0x8;
+	
+	if(bit0 == 1 && Modulo(gl_VertexID + gridSize , gridSize * 2) == 0)
+	{
+		positionGlobal.x -= 1.0f / (gridSize-1);
+	}
+	if(bit1 == 2 && gl_VertexID < gridSize && Modulo(gl_VertexID,2) == 1)
+	{
+		positionGlobal.y -= 1.0f / (gridSize-1);
+	}
+	if(bit2 == 4 && Modulo(gl_VertexID, gridSize * 2) == gridSize * 2 -1)
+	{
+		positionGlobal.x -= 1.0f / (gridSize-1);
+	}
+	if(bit3 == 8 && gl_VertexID > gridSize * gridSize - gridSize && Modulo(gl_VertexID, 2) == 1)
+	{
+		positionGlobal.y -= 1.0f / (gridSize-1);
+	}
 }
 
 void main()
 {
 	int nInstance = gl_InstanceID; 
+	ManageTJunctions();
 	vec4 pos = vec4(Interpolate3D(edgePosition0, edgePosition1, edgePosition2, edgePosition3),1);
 	pos = vec4(normalize(pos.xyz) + planetCenter,1);
 	vs_out.position = pos.xyz;
@@ -84,7 +121,7 @@ void main()
 	perlin = max(0.01f,perlin);
 	pos = vec4(pos.xyz * perlin + pos.xyz,1);
 
-	vs_out.height = perlin;
+	//vs_out.height = perlin;
 	
 	vec4 vertexPositionVS = viewProjectionMatrix * pos;
 	

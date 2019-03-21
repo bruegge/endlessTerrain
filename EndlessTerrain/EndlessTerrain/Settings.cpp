@@ -19,6 +19,8 @@ void CSettings::CreateSettings(CPlanet* pPlanet)
 		pGlobalSettings = new CSettings();
 		pGlobalSettings->m_pPlanet = pPlanet;
 		pGlobalSettings->m_nGeometrySize = pPlanet->GetGeometrySize();
+		pGlobalSettings->m_fTileDivisionAngle = 10.0f;
+		pGlobalSettings->m_bEnableQuadTreeUpdate = true;
 	}
 }
 
@@ -36,6 +38,14 @@ void CSettings::ApplySettings()
 	else
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	if (m_bEnableCullFace)
+	{
+		glEnable(GL_CULL_FACE);
+	}
+	else
+	{
+		glDisable(GL_CULL_FACE);
 	}
 	if (m_pPlanet->GetGeometrySize() != m_nGeometrySize)
 	{

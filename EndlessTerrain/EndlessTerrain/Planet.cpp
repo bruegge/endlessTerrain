@@ -1,5 +1,6 @@
 #include "Planet.h"
 #include <vector>
+#include <chrono>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include "Settings.h"
@@ -81,7 +82,7 @@ void CPlanet::SetGeometrySize(unsigned int nGridWidth)
 		glGenVertexArrays(1, &m_nVAO);
 		glGenBuffers(1, &m_nVBOEdges);
 		glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 100000, nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3)+1) * 100000, nullptr, GL_DYNAMIC_DRAW);
 	}
 	glBindVertexArray(m_nVAO);
 	glGenBuffers(1, &m_nVBO);
@@ -99,13 +100,15 @@ void CPlanet::SetGeometrySize(unsigned int nGridWidth)
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(0 * sizeof(float))); //edge0
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 13, (GLvoid*)(0 * sizeof(float))); //edge0
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(3 * sizeof(float))); //edge1
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 13, (GLvoid*)(3 * sizeof(float))); //edge1
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(6 * sizeof(float))); //edge2
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 13, (GLvoid*)(6 * sizeof(float))); //edge2
 	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 12, (GLvoid*)(9 * sizeof(float))); //edge3
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 13, (GLvoid*)(9 * sizeof(float))); //edge3
+	glEnableVertexAttribArray(5);
+	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 13, (GLvoid*)(12 * sizeof(float))); //TJunctionFlag
 
 	glBindVertexArray(0);
 	m_nCountIBO = resultIBO.size();
@@ -141,11 +144,13 @@ void CPlanet::Draw(CShader* pShader, CCamera* pCamera)
 	glUniform1iv(glGetUniformLocation(pShader->GetID(), "perm"), 512, m_aPerm);
 		
 	glUniform1i(glGetUniformLocation(pShader->GetID(), "perlinNoiseCount"), m_nPerlinNoiseCount);
+	glUniform1i(glGetUniformLocation(pShader->GetID(), "gridSize"), m_nGeometrySize);
 
 	glVertexAttribDivisor(1, 1);
 	glVertexAttribDivisor(2, 1);
 	glVertexAttribDivisor(3, 1);
 	glVertexAttribDivisor(4, 1);
+	glVertexAttribDivisor(5, 1);
 
 	glDrawElementsInstanced(GL_TRIANGLES, m_nCountIBO, GL_UNSIGNED_INT, 0, m_nCountTiles);
 	
@@ -155,28 +160,37 @@ void CPlanet::Draw(CShader* pShader, CCamera* pCamera)
 
 void CPlanet::ApplyChangesToVBO(glm::vec3 vCameraPosition)
 {
-	bool bChanged = false;
-	for (unsigned int i = 0; i < 6; ++i)
+	if (CSettings::GetSettings()->m_bEnableQuadTreeUpdate)
 	{
-		m_aQuadTrees[i].CalculateTiles(vCameraPosition);
-		if (m_aQuadTrees[i].IsChanged())
-		{
-			bChanged = true;
-		}
-	}
-
-	if (bChanged)
-	{
-		GLuint nOffset = 0;
+		auto start = std::chrono::steady_clock::now();
+		bool bChanged = false;
 		for (unsigned int i = 0; i < 6; ++i)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
-			glBufferSubData(GL_ARRAY_BUFFER, nOffset, sizeof(glm::vec3) * m_aQuadTrees[i].GetTileCount() * 4, &m_aQuadTrees[i].GetTiles()->at(0).vEdgePositions);
-			nOffset += m_aQuadTrees[i].GetTileCount() * 4 * sizeof(glm::vec3);
+			m_aQuadTrees[i].CalculateTiles(vCameraPosition);
+	
+			if (m_aQuadTrees[i].IsChanged())
+			{
+				bChanged = true;
+			}
 		}
-		m_nCountTiles = nOffset / sizeof(glm::vec3) / 4;
-		//info output number of instances
-		CSettings::GetSettings()->m_nInfoInstanceCount = m_nCountTiles;
+		auto end = std::chrono::steady_clock::now();
+		std::chrono::duration<double> diff = end - start;
+		start = std::chrono::steady_clock::now();
+		CSettings::GetSettings()->m_dComputeTimeCPU = diff.count() * 1000.0;
+
+		if (bChanged)
+		{
+			GLuint nOffset = 0;
+			for (unsigned int i = 0; i < 6; ++i)
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, m_nVBOEdges);
+				glBufferSubData(GL_ARRAY_BUFFER, nOffset, (sizeof(glm::vec3) * 4 + 4) * m_aQuadTrees[i].GetTileCount(), &m_aQuadTrees[i].GetTiles()->at(0).vEdgePositions);
+				nOffset += m_aQuadTrees[i].GetTileCount() * (4 * sizeof(glm::vec3) + 4);
+			}
+			m_nCountTiles = nOffset / (sizeof(glm::vec3) * 4 + 4);
+			//info output number of instances
+			CSettings::GetSettings()->m_nInfoInstanceCount = m_nCountTiles;
+		}
 	}
 }
 

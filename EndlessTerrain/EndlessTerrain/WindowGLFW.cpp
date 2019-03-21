@@ -2,10 +2,10 @@
 #include <iostream>
 
 
-CWindowGLFW::CWindowGLFW()
+CWindowGLFW::CWindowGLFW(unsigned int nWidth, unsigned int nHeight)
 {
-	m_nScreenWidth = 800;
-	m_nScreenHeight = 600;
+	m_nScreenWidth = nWidth;
+	m_nScreenHeight = nHeight;
 	if (!glfwInit())
 	{
 		std::cout << "Failed to initialize GLFW" << std::endl;

@@ -6,7 +6,7 @@
 class CWindowGLFW
 {
 public:
-	CWindowGLFW();
+	CWindowGLFW(unsigned int nWidth, unsigned int nHeight);
 	~CWindowGLFW();
 
 	void SetWindowSize(unsigned int nWidth, unsigned int nHeight);

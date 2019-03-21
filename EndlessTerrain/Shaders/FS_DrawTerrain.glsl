@@ -8,6 +8,7 @@ in VS_OUT
 {
     float height;
 	vec3 position;
+	vec3 color;
 } fs_in;
 
 out vec4 color;
@@ -100,7 +101,7 @@ void main()
 		color = vec4(0,1,0,1);
 	}
 
-	//color = vec4(fs_in.height/10.0f,0,0,1);
+	//color = vec4(fs_in.color,1);
 	//color = vec4(1,1,1,1);
 	
 }
